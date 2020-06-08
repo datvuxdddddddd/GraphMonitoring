@@ -13,6 +13,7 @@ import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -31,11 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        getDataFromThingSpeak();
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         tempGraph = findViewById(R.id.tempGraph);
         ambGraph = findViewById(R.id.ambGraph);
+        getDataFromThingSpeak();
         setupBlinkyTimer();
         startMQTT();
 
@@ -56,60 +58,62 @@ public class MainActivity extends AppCompatActivity {
         Request.Builder builder = new Request.Builder();
 
         String apiURL = "https://api.thingspeak.com/channels/1007655/feeds.json?results=5";
-
         Request request = builder.url(apiURL).build();
-
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
-            public void onFailure(Request request, IOException e) {
-
-            }
-
-            @Override
-            public void onResponse(Response response) throws IOException {
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                double[] temp = new double[5];
+                double[] amb = new double[5];
+                int i;
                 String jsonString = response.body().string();
                 try{
                     JSONObject jsonDataTemp = new JSONObject(jsonString);
                     JSONArray jsonArray1 = jsonDataTemp.getJSONArray("feeds");
-                    double temp0 = jsonArray1.getJSONObject(0).getDouble("field1");
-                    double temp1 = jsonArray1.getJSONObject(1).getDouble("field1");
-                    double temp2 = jsonArray1.getJSONObject(2).getDouble("field1");
-                    double temp3 = jsonArray1.getJSONObject(3).getDouble("field1");
-                    double temp4 = jsonArray1.getJSONObject(4).getDouble("field1");
+
+                    //TEMP
+                    for (i = 0; i < temp.length; i++){
+                        if (jsonArray1.getJSONObject(i).getString("field1").equals("null"))
+                            temp[i] = 0;
+                        else temp[i] = jsonArray1.getJSONObject(i).getDouble("field1");
+                    }
 
                     LineGraphSeries<DataPoint> seriesTemp = new LineGraphSeries<>(new DataPoint[]
-                            {   new DataPoint(0, temp0),
-                                    new DataPoint(1, temp1),
-                                    new DataPoint(2, temp2),
-                                    new DataPoint(3, temp3),
-                                    new DataPoint(4, temp4)
+                            {   new DataPoint(0, temp[0]),
+                                    new DataPoint(1, temp[1]),
+                                    new DataPoint(2, temp[2]),
+                                    new DataPoint(3, temp[3]),
+                                    new DataPoint(4, temp[4])
                             });
-                    setGraphLimit(tempGraph);
+                    setGraphLimit(tempGraph, 40);
                     showDataOnGraph(seriesTemp, tempGraph);
 
-//                  aaa             ///
-
+                    //AMBIANCE
                     JSONObject jsonDataAmb = new JSONObject(jsonString);
                     JSONArray jsonArray = jsonDataAmb.getJSONArray("feeds");
-                    double amb0 = jsonArray.getJSONObject(0).getDouble("field2");
-                    double amb1 = jsonArray.getJSONObject(1).getDouble("field2");
-                    double amb2 = jsonArray.getJSONObject(2).getDouble("field2");
-                    double amb3 = jsonArray.getJSONObject(3).getDouble("field2");
-                    double amb4 = jsonArray.getJSONObject(4).getDouble("field2");
-
+                    for (i = 0; i < temp.length; i++){
+                        if (jsonArray.getJSONObject(i).getString("field2").equals("null"))
+                            amb[i] = 0;
+                        else amb[i] = jsonArray.getJSONObject(i).getDouble("field2");
+                    }
                     LineGraphSeries<DataPoint> seriesAmb = new LineGraphSeries<>(new DataPoint[]
-                            {   new DataPoint(0, amb0),
-                                    new DataPoint(1, amb1),
-                                    new DataPoint(2, amb2),
-                                    new DataPoint(3, amb3),
-                                    new DataPoint(4, amb4)
-                                    //seriesAmb.appendData();
+                            {   new DataPoint(0, amb[0]),
+                                    new DataPoint(1, amb[1]),
+                                    new DataPoint(2, amb[2]),
+                                    new DataPoint(3, amb[3]),
+                                    new DataPoint(4, amb[4])
                             });
 
-                    setGraphLimit(ambGraph);
+                    setGraphLimit(ambGraph, 100);
                     showDataOnGraph(seriesAmb, ambGraph);
 
-                }catch (Exception e){}
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
 
             }
         });
@@ -123,12 +127,12 @@ public class MainActivity extends AppCompatActivity {
                 getDataFromThingSpeak();
             }
         };
-        mTimer.schedule(mTask, 2000, 5000);
+        mTimer.schedule(mTask, 5000, 5000);
     }
 
-    public void setGraphLimit(GraphView graph) {
+    public void setGraphLimit(GraphView graph, int y) {
         graph.getViewport().setMinY(0);
-        graph.getViewport().setMaxY(100);
+        graph.getViewport().setMaxY(y);
         graph.getViewport().setYAxisBoundsManual(true);
     }
 

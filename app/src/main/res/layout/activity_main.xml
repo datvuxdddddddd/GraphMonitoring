@@ -10,7 +10,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:background="#80000000">
+        android:background="#FFFFFF">
         <TextView
             android:id="@+id/title"
             android:layout_width="match_parent"
@@ -33,7 +33,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#80000000"
+                android:background="#FFFFFF"
                 android:orientation="vertical">
 
                 <TextView
@@ -41,9 +41,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="57dp"
                     android:gravity="center"
-                    android:text="temperature"
-                    android:textAlignment="textStart"
-                    android:textColor="#FFFFFF" />
+                    android:text="Temperature"
+                    android:textAlignment="center" />
 
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/tempGraph"
@@ -60,9 +59,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="57dp"
                     android:gravity="center"
-                    android:text="ambient"
-                    android:textAlignment="textStart"
-                    android:textColor="#FFFFFF" />
+                    android:text="Ambient"
+                    android:textAlignment="center" />
 
                 <com.jjoe64.graphview.GraphView
                     android:id="@+id/ambGraph"
