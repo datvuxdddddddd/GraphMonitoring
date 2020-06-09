@@ -15,13 +15,13 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 public class MQTTHelper {
     // MODIFY THIS
-    final String serverUri = "tcp://hairdresser.cloudmqtt.com:17681";
+    final String serverUri = "tcp://13.76.100.129:1883";
 
-    final String clientId = "Android_001";
-    final String subscriptionTopic = "sensor/+";
+    final String clientId = "end";
+    final String subscriptionTopic = "";
 
-    final String username = "zwpkdaox";
-    final String password = "0BxcZvUdbXkf";
+    final String username = "BKvm1";
+    final String password = "Hcmut_CSE_2020";
 
     public MqttAndroidClient mqttAndroidClient;
 

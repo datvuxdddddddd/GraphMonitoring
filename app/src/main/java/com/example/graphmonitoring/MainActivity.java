@@ -8,9 +8,12 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +33,9 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
 
     GraphView tempGraph, ambGraph;
+    Button LED1, LED2;
+    final int[] msgCount = {0};
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,9 +43,37 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         tempGraph = findViewById(R.id.tempGraph);
         ambGraph = findViewById(R.id.ambGraph);
+
+        LED1 = findViewById(R.id.LED1);
+        LED2 = findViewById(R.id.LED2);
+
+
+        MainActivity.this.setTitle("Message sent: 0");
         getDataFromThingSpeak();
         setupBlinkyTimer();
         startMQTT();
+
+        LED1.setOnClickListener((View v) -> {
+            MqttMessage message = new MqttMessage();
+            message.setPayload("TOGGLE1".getBytes());
+            try {
+                mqttHelper.mqttAndroidClient.publish("callback", message);
+                runOnUiThread(() -> MainActivity.this.setTitle("Message sent: " + ++msgCount[0]));
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+        });
+
+        LED2.setOnClickListener((View v) -> {
+            MqttMessage message = new MqttMessage();
+            message.setPayload("TOGGLE2".getBytes());
+            try {
+                mqttHelper.mqttAndroidClient.publish("callback", message);
+                runOnUiThread(() -> MainActivity.this.setTitle("Message sent: " + ++msgCount[0]));
+            } catch (MqttException e) {
+                e.printStackTrace();
+            }
+        });
 
     }
 
@@ -57,13 +91,13 @@ public class MainActivity extends AppCompatActivity {
         OkHttpClient okHttpClient = new OkHttpClient();
         Request.Builder builder = new Request.Builder();
 
-        String apiURL = "https://api.thingspeak.com/channels/1007655/feeds.json?results=5";
+        String apiURL = "https://api.thingspeak.com/channels/1007655/feeds.json?results=9";
         Request request = builder.url(apiURL).build();
         okHttpClient.newCall(request).enqueue(new Callback() {
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                double[] temp = new double[5];
-                double[] amb = new double[5];
+                double[] temp = new double[9];
+                double[] amb = new double[9];
                 int i;
                 String jsonString = response.body().string();
                 try{
@@ -82,7 +116,12 @@ public class MainActivity extends AppCompatActivity {
                                     new DataPoint(1, temp[1]),
                                     new DataPoint(2, temp[2]),
                                     new DataPoint(3, temp[3]),
-                                    new DataPoint(4, temp[4])
+                                    new DataPoint(4, temp[4]),
+                                    new DataPoint(5, temp[5]),
+                                    new DataPoint(6, temp[6]),
+                                    new DataPoint(7, temp[7]),
+                                    new DataPoint(8, temp[8])
+
                             });
                     setGraphLimit(tempGraph, 40);
                     showDataOnGraph(seriesTemp, tempGraph);
@@ -100,7 +139,12 @@ public class MainActivity extends AppCompatActivity {
                                     new DataPoint(1, amb[1]),
                                     new DataPoint(2, amb[2]),
                                     new DataPoint(3, amb[3]),
-                                    new DataPoint(4, amb[4])
+                                    new DataPoint(4, amb[4]),
+                                    new DataPoint(5, amb[5]),
+                                    new DataPoint(6, amb[6]),
+                                    new DataPoint(7, amb[7]),
+                                    new DataPoint(8, amb[8])
+
                             });
 
                     setGraphLimit(ambGraph, 100);
@@ -133,6 +177,8 @@ public class MainActivity extends AppCompatActivity {
     public void setGraphLimit(GraphView graph, int y) {
         graph.getViewport().setMinY(0);
         graph.getViewport().setMaxY(y);
+        graph.getGridLabelRenderer().setNumHorizontalLabels(9);
+        graph.getGridLabelRenderer().setNumVerticalLabels(7);
         graph.getViewport().setYAxisBoundsManual(true);
     }
 
@@ -153,14 +199,13 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-                Log.d("MQTT", mqttMessage.toString());
+                //Log.d("received", mqttMessage.toString());
             }
 
             @Override
             public void deliveryComplete(IMqttDeliveryToken iMqttDeliveryToken) {
-
+                Log.d("SENT", "Sent message");
             }
-
         });
 
     }
